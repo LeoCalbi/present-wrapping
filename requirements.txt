@@ -1,0 +1,4 @@
+jupyter==1.0.0
+matplotlib==3.3.0
+iminizinc==0.4
+z3-solver==4.8.8.0
