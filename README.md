@@ -1,6 +1,6 @@
 # PWP (Present Wrapping Problem)
 
-The PWP can be seen as a specialization of the more general rectangle packing problem, in which we have a set of rectangles (our presents) of given dimensions that have to fit into a pre-determined container (the wrapping paper) of a given size. The great thing about PWP is that we kwow the items will perfectly fit into the given container, without any kind of wasted space.
+The PWP can be seen as a specialization of the more general rectangle packing problem, in which we have a set of rectangles (our presents) of given dimensions that have to fit into a pre-determined container (the wrapping paper) of a given size. The great thing about PWP is that we know the items will perfectly fit into the given container, without any kind of wasted space.
 
 ## Installation & Execution
 
