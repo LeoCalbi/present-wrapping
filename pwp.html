@@ -13098,7 +13098,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[251]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
@@ -13115,7 +13115,7 @@ div#notebook {
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">z3</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="n">set_param</span><span class="p">(</span><span class="s1">&#39;parallel.enable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+<span class="n">set_param</span><span class="p">(</span><span class="s1">&#39;parallel.enable&#39;</span><span class="p">,</span> <span class="n">Fa</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13131,212 +13131,11 @@ div#notebook {
     <div class="prompt"></div>
 
 
-
-
-
-<div id="9f8cdae0-f4b5-4719-a2db-7e586759ec3c"></div>
-<div class="output_subarea output_javascript ">
-<script type="text/javascript">
-var element = $('#9f8cdae0-f4b5-4719-a2db-7e586759ec3c');
-"use strict";
-
-CodeMirror.defineMode("text/minizinc", function (config) {
-	var isOperatorChar = /[+\-*=<>\/]/;
-
-	var keywords = {
-		array: true,
-		bool: true,
-		case: true,
-		constraint: true,
-		diff: true,
-		div: true,
-		else: true,
-		elseif: true,
-		endif: true,
-		enum: true,
-		false: true,
-		float: true,
-		function: true,
-		if: true,
-		in: true,
-		include: true,
-		int: true,
-		intersect: true,
-		let: true,
-		list: true,
-		maximize: true,
-		minimize: true,
-		mod: true,
-		not: true,
-		of: true,
-		op: true,
-		output: true,
-		par: true,
-		predicate: true,
-		record: true,
-		satisfy: true,
-		set: true,
-		solve: true,
-		string: true,
-		subset: true,
-		superset: true,
-		symdiff: true,
-		test: true,
-		then: true,
-		true: true,
-		tuple: true,
-		type: true,
-		union: true,
-		var: true,
-		where: true,
-		xor: true,
-	};
-
-	var punc = ":;,.(){}[]";
-
-	function tokenBase(stream, state) {
-		var ch = stream.next();
-		if (ch == '"') {
-			state.tokenize.push(tokenString);
-			return tokenString(stream, state);
-		}
-		if (/[\d\.]/.test(ch)) {
-			if (ch == ".") {
-				stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
-			} else if (ch == "0") {
-				stream.match(/^[xX][0-9a-fA-F]+/) || stream.match(/^0[0-7]+/);
-			} else {
-				stream.match(/^[0-9]*\.?[0-9]*([eE][\-+]?[0-9]+)?/);
-			}
-			return "number";
-		}
-		if (ch == "/") {
-			if (stream.eat("*")) {
-				state.tokenize.push(tokenComment);
-				return tokenComment(stream, state);
-			}
-		}
-		if (ch == "%") {
-			stream.skipToEnd();
-			return "comment";
-		}
-		if (isOperatorChar.test(ch)) {
-			stream.eatWhile(isOperatorChar);
-			return "operator";
-		}
-		if (punc.indexOf(ch) > -1) {
-			return "punctuation";
-		}
-		stream.eatWhile(/[\w\$_\xa1-\uffff]/);
-		var cur = stream.current();
-		if (keywords.propertyIsEnumerable(cur)) {
-			return "keyword";
-		}
-		return "variable";
-	}
-
-	function tokenComment(stream, state) {
-		var maybeEnd = false,
-			ch;
-		while ((ch = stream.next())) {
-			if (ch == "/" && maybeEnd) {
-				state.tokenize.pop();
-				break;
-			}
-			maybeEnd = ch == "*";
-		}
-		return "comment";
-	}
-
-	function tokenUntilClosingParen() {
-		var depth = 0;
-		return function (stream, state, prev) {
-			var inner = tokenBase(stream, state, prev);
-			console.log("untilClosing", inner, stream.current());
-			if (inner == "punctuation") {
-				if (stream.current() == "(") {
-					++depth;
-				} else if (stream.current() == ")") {
-					if (depth == 0) {
-						stream.backUp(1);
-						state.tokenize.pop();
-						return state.tokenize[state.tokenize.length - 1](stream, state);
-					} else {
-						--depth;
-					}
-				}
-			}
-			return inner;
-		};
-	}
-
-	function tokenString(stream, state) {
-		var escaped = false,
-			next,
-			end = false;
-		while ((next = stream.next()) != null) {
-			if (next == "(" && escaped) {
-				state.tokenize.push(tokenUntilClosingParen());
-				return "string";
-			}
-			if (next == '"' && !escaped) {
-				end = true;
-				break;
-			}
-			escaped = !escaped && next == "\\";
-		}
-		if (end || !escaped) state.tokenize.pop();
-		return "string";
-	}
-
-	return {
-		startState: function (basecolumn) {
-			return {
-				tokenize: [],
-			};
-		},
-
-		token: function (stream, state) {
-			if (stream.eatSpace()) return null;
-			var style = (state.tokenize[state.tokenize.length - 1] || tokenBase)(
-				stream,
-				state
-			);
-			console.log("token", style);
-			return style;
-		},
-
-		blockCommentStart: "/*",
-		blockCommentEnd: "*/",
-		lineComment: "%",
-	};
-});
-
-CodeMirror.defineMIME("text/minizinc", "text/minizinc");
-
-Jupyter.CodeCell.options_default.highlight_modes["magic_text/minizinc"] = {
-	reg: [/^%%minizinc/],
-};
-
-Jupyter.notebook.get_cells().map(function (cell) {
-	if (cell.cell_type == "code") {
-		cell.auto_highlight();
-	}
-});
-
-</script>
-</div>
-
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>MiniZinc to FlatZinc converter, version 2.4.3
-Copyright (C) 2014-2020 Monash University, NICTA, Data61
+<pre>The autoreload extension is already loaded. To reload it, use:
+  %reload_ext autoreload
+The iminizinc extension is already loaded. To reload it, use:
+  %reload_ext iminizinc
 </pre>
 </div>
 </div>
@@ -13625,7 +13424,7 @@ Copyright (C) 2014-2020 Monash University, NICTA, Data61
 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_instance</span><span class="p">,</span> <span class="n">max_instance</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
     <span class="n">instances</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
     <span class="n">current_instance</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;instances/</span><span class="si">{</span><span class="n">current_instance</span><span class="si">}</span><span class="s2">.txt&quot;</span> 
+    <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;instances/</span><span class="si">{</span><span class="n">current_instance</span><span class="si">}</span><span class="s2">.txt&quot;</span>
     <span class="n">w_paper</span><span class="p">,</span> <span class="n">h_paper</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">presents</span> <span class="o">=</span> <span class="n">read_input</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Paper dimensions: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Presents dimensions: </span><span class="si">{</span><span class="n">presents</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -40854,7 +40653,7 @@ L 719.74375 8.59598
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[88]:</div>
+<div class="prompt input_prompt">In&nbsp;[279]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v1
@@ -40906,7 +40705,7 @@ solve satisfy;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[93]:</div>
+<div class="prompt input_prompt">In&nbsp;[275]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v2
@@ -40916,15 +40715,16 @@ include &quot;globals.mzn&quot;;
 int: w_paper;
 int: h_paper;
 int: n;
-array[1..n, 1..2] of int: presents;
+array[ns, 1..2] of int: presents;
 
 % Constants
 int: max_dim = max(w_paper, h_paper);
-int: min_present_dim = min([min(presents[i, 1], presents[i, 2]) | i in 1..n]);
+int: min_present_dim = min([min(presents[i, 1], presents[i, 2]) | i in ns]);
+set of int: ns = 1..n;
 
 % Variables
-array[1..n, 1..2] of var 0..max_dim - min_present_dim: bl_corners;
-array[1..n] of var 0..coord_to_value(w_paper, h_paper): bl_corners_values;
+array[ns, 1..2] of var 0..max_dim - min_present_dim: bl_corners;
+array[ns] of var 0..coord_to_value(w_paper, h_paper): bl_corners_values;
 
 % Functions
 function int: coord_to_value(int: x, int: y) = x + (y * max_dim);
@@ -40948,7 +40748,7 @@ constraint alldifferent(bl_corners_values);
 constraint count_eq(bl_corners_values, 0, 1);
 
 % Presents cannot overlap
-constraint forall(i, j in 1..n where j &gt; i) (overlap_area(i, j) == 0);
+constraint forall(i, j in ns where j &gt; i) (overlap_area(i, j) == 0);
 
 % Reduce presents domains
 constraint forall(i in 1..n) (bl_corners[i, 1] &lt;= w_paper - presents[i, 1]);
@@ -40980,7 +40780,7 @@ solve satisfy;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[97]:</div>
+<div class="prompt input_prompt">In&nbsp;[274]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v3
@@ -40990,20 +40790,21 @@ include &quot;globals.mzn&quot;;
 int: w_paper;
 int: h_paper;
 int: n;
-array[1..n, 1..2] of 1..max_dim: presents;
+array[ns, 1..2] of 1..max_dim: presents;
 
 % Constants
 int: max_dim = max(w_paper, h_paper);
-int: min_present_dim = min([min(presents[i, 1], presents[i, 2]) | i in 1..n]);
-array[1..n] of 1..max_dim: presents_xs = [presents[i, 1] | i in 1..n];
-array[1..n] of 1..max_dim: presents_ys = [presents[i, 2] | i in 1..n];
+int: min_present_dim = min([min(presents[i, 1], presents[i, 2]) | i in ns]);
+set of int: ns = 1..n;
+array[ns] of 1..max_dim: presents_xs = [presents[i, 1] | i in 1..n];
+array[ns] of 1..max_dim: presents_ys = [presents[i, 2] | i in 1..n];
 
 % Variables
-array[1..n, 1..2] of var 0..max_dim - min_present_dim: bl_corners;
-array[1..n, 1..2] of var 1..max_dim: tr_corners;
-array[1..n] of var 0..coord_to_value(w_paper, h_paper): bl_corners_values;
-array[1..n] of var 0..w_paper - min_present_dim: bl_corners_xs;
-array[1..n] of var 0..h_paper - min_present_dim: bl_corners_ys;
+array[ns, 1..2] of var 0..max_dim - min_present_dim: bl_corners;
+array[ns, 1..2] of var 1..max_dim: tr_corners;
+array[ns] of var 0..coord_to_value(w_paper, h_paper): bl_corners_values;
+array[ns] of var 0..w_paper - min_present_dim: bl_corners_xs;
+array[ns] of var 0..h_paper - min_present_dim: bl_corners_ys;
 
 % Functions
 function int: coord_to_value(int: x, int: y) = x + (y * max_dim);
@@ -41086,7 +40887,7 @@ solve satisfy;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[127]:</div>
+<div class="prompt input_prompt">In&nbsp;[291]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v4
@@ -41239,7 +41040,7 @@ solve satisfy;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[98]:</div>
+<div class="prompt input_prompt">In&nbsp;[258]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v5
@@ -41498,7 +41299,7 @@ solve satisfy;
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[166]:</div>
+<div class="prompt input_prompt">In&nbsp;[270]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v6
@@ -41669,7 +41470,7 @@ About rectangles with same dimensions, we simply included a symmetry breaking co
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[69]:</div>
+<div class="prompt input_prompt">In&nbsp;[269]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v7
@@ -69189,19 +68990,6 @@ L 716.565625 7.2
         <span class="p">[</span><span class="n">occupied_area</span><span class="p">]</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">bl_corners</span><span class="p">,</span> <span class="n">model</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span> 
 </pre></div>
 
     </div>
