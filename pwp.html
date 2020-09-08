@@ -13098,7 +13098,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
@@ -13132,212 +13132,11 @@ div#notebook {
     <div class="prompt"></div>
 
 
-
-
-
-<div id="0557c5ad-be1b-47b9-9da3-6452af2c9079"></div>
-<div class="output_subarea output_javascript ">
-<script type="text/javascript">
-var element = $('#0557c5ad-be1b-47b9-9da3-6452af2c9079');
-"use strict";
-
-CodeMirror.defineMode("text/minizinc", function (config) {
-	var isOperatorChar = /[+\-*=<>\/]/;
-
-	var keywords = {
-		array: true,
-		bool: true,
-		case: true,
-		constraint: true,
-		diff: true,
-		div: true,
-		else: true,
-		elseif: true,
-		endif: true,
-		enum: true,
-		false: true,
-		float: true,
-		function: true,
-		if: true,
-		in: true,
-		include: true,
-		int: true,
-		intersect: true,
-		let: true,
-		list: true,
-		maximize: true,
-		minimize: true,
-		mod: true,
-		not: true,
-		of: true,
-		op: true,
-		output: true,
-		par: true,
-		predicate: true,
-		record: true,
-		satisfy: true,
-		set: true,
-		solve: true,
-		string: true,
-		subset: true,
-		superset: true,
-		symdiff: true,
-		test: true,
-		then: true,
-		true: true,
-		tuple: true,
-		type: true,
-		union: true,
-		var: true,
-		where: true,
-		xor: true,
-	};
-
-	var punc = ":;,.(){}[]";
-
-	function tokenBase(stream, state) {
-		var ch = stream.next();
-		if (ch == '"') {
-			state.tokenize.push(tokenString);
-			return tokenString(stream, state);
-		}
-		if (/[\d\.]/.test(ch)) {
-			if (ch == ".") {
-				stream.match(/^[0-9]+([eE][\-+]?[0-9]+)?/);
-			} else if (ch == "0") {
-				stream.match(/^[xX][0-9a-fA-F]+/) || stream.match(/^0[0-7]+/);
-			} else {
-				stream.match(/^[0-9]*\.?[0-9]*([eE][\-+]?[0-9]+)?/);
-			}
-			return "number";
-		}
-		if (ch == "/") {
-			if (stream.eat("*")) {
-				state.tokenize.push(tokenComment);
-				return tokenComment(stream, state);
-			}
-		}
-		if (ch == "%") {
-			stream.skipToEnd();
-			return "comment";
-		}
-		if (isOperatorChar.test(ch)) {
-			stream.eatWhile(isOperatorChar);
-			return "operator";
-		}
-		if (punc.indexOf(ch) > -1) {
-			return "punctuation";
-		}
-		stream.eatWhile(/[\w\$_\xa1-\uffff]/);
-		var cur = stream.current();
-		if (keywords.propertyIsEnumerable(cur)) {
-			return "keyword";
-		}
-		return "variable";
-	}
-
-	function tokenComment(stream, state) {
-		var maybeEnd = false,
-			ch;
-		while ((ch = stream.next())) {
-			if (ch == "/" && maybeEnd) {
-				state.tokenize.pop();
-				break;
-			}
-			maybeEnd = ch == "*";
-		}
-		return "comment";
-	}
-
-	function tokenUntilClosingParen() {
-		var depth = 0;
-		return function (stream, state, prev) {
-			var inner = tokenBase(stream, state, prev);
-			console.log("untilClosing", inner, stream.current());
-			if (inner == "punctuation") {
-				if (stream.current() == "(") {
-					++depth;
-				} else if (stream.current() == ")") {
-					if (depth == 0) {
-						stream.backUp(1);
-						state.tokenize.pop();
-						return state.tokenize[state.tokenize.length - 1](stream, state);
-					} else {
-						--depth;
-					}
-				}
-			}
-			return inner;
-		};
-	}
-
-	function tokenString(stream, state) {
-		var escaped = false,
-			next,
-			end = false;
-		while ((next = stream.next()) != null) {
-			if (next == "(" && escaped) {
-				state.tokenize.push(tokenUntilClosingParen());
-				return "string";
-			}
-			if (next == '"' && !escaped) {
-				end = true;
-				break;
-			}
-			escaped = !escaped && next == "\\";
-		}
-		if (end || !escaped) state.tokenize.pop();
-		return "string";
-	}
-
-	return {
-		startState: function (basecolumn) {
-			return {
-				tokenize: [],
-			};
-		},
-
-		token: function (stream, state) {
-			if (stream.eatSpace()) return null;
-			var style = (state.tokenize[state.tokenize.length - 1] || tokenBase)(
-				stream,
-				state
-			);
-			console.log("token", style);
-			return style;
-		},
-
-		blockCommentStart: "/*",
-		blockCommentEnd: "*/",
-		lineComment: "%",
-	};
-});
-
-CodeMirror.defineMIME("text/minizinc", "text/minizinc");
-
-Jupyter.CodeCell.options_default.highlight_modes["magic_text/minizinc"] = {
-	reg: [/^%%minizinc/],
-};
-
-Jupyter.notebook.get_cells().map(function (cell) {
-	if (cell.cell_type == "code") {
-		cell.auto_highlight();
-	}
-});
-
-</script>
-</div>
-
-</div>
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>MiniZinc to FlatZinc converter, version 2.4.3
-Copyright (C) 2014-2020 Monash University, NICTA, Data61
+<pre>The autoreload extension is already loaded. To reload it, use:
+  %reload_ext autoreload
+The iminizinc extension is already loaded. To reload it, use:
+  %reload_ext iminizinc
 </pre>
 </div>
 </div>
@@ -13380,7 +13179,7 @@ Copyright (C) 2014-2020 Monash University, NICTA, Data61
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">read_input</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
@@ -13631,7 +13430,7 @@ Copyright (C) 2014-2020 Monash University, NICTA, Data61
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Paper dimensions: </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Presents dimensions: </span><span class="si">{</span><span class="n">presents</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
-    <span class="n">solutions</span> <span class="o">=</span> <span class="o">%</span><span class="k">minizinc</span> --solver $cp_solver -t $max_time -s pwp-v6
+    <span class="n">solutions</span> <span class="o">=</span> <span class="o">%</span><span class="k">minizinc</span> --solver $cp_solver -t $max_time -s cp-v6
     <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
     <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">solutions</span><span class="p">:</span>
@@ -40858,7 +40657,7 @@ L 719.74375 8.59598
 <div class="prompt input_prompt">In&nbsp;[279]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v1
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v1
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -40910,7 +40709,7 @@ solve satisfy;
 <div class="prompt input_prompt">In&nbsp;[275]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v2
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v2
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -40985,7 +40784,7 @@ solve satisfy;
 <div class="prompt input_prompt">In&nbsp;[274]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v3
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v3
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -41092,7 +40891,7 @@ solve satisfy;
 <div class="prompt input_prompt">In&nbsp;[291]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v4
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v4
 include &quot;globals.mzn&quot;;
 
 %Input values
@@ -41245,7 +41044,7 @@ solve satisfy;
 <div class="prompt input_prompt">In&nbsp;[258]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v5
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v5
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -41504,7 +41303,7 @@ solve satisfy;
 <div class="prompt input_prompt">In&nbsp;[270]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v6
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v6
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -41675,7 +41474,7 @@ About rectangles with same dimensions, we simply included a symmetry breaking co
 <div class="prompt input_prompt">In&nbsp;[269]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> pwp-v7
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">mzn_model</span> cp-v7
 include &quot;globals.mzn&quot;;
 
 % Input values
@@ -41830,7 +41629,7 @@ solve:: seq_search([
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[185]:</div>
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">member</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">l</span><span class="p">):</span>
@@ -41936,6 +41735,28 @@ solve:: seq_search([
                     <span class="n">Sum</span><span class="p">([(</span><span class="n">If</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">t</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="n">If</span><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="o">*</span> <span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">b</span>
                 <span class="p">)</span>
     <span class="k">return</span> <span class="n">c</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">convertor</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;benchmark&quot;</span><span class="p">,</span> <span class="n">logic</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Outputs the given model in SMTLIB2 format </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">Solver</span><span class="p">))</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">Ast</span> <span class="o">*</span> <span class="mi">0</span><span class="p">)()</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">assertions</span><span class="p">()</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">BoolVal</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">And</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Z3_benchmark_to_smtlib_string</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">ctx_ref</span><span class="p">(),</span> <span class="n">name</span><span class="p">,</span> <span class="n">logic</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">as_ast</span><span class="p">())</span>
 </pre></div>
 
     </div>
@@ -69130,7 +68951,7 @@ L 716.565625 7.2
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[252]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">smt_v1</span><span class="p">(</span><span class="n">w_paper</span><span class="p">,</span> <span class="n">h_paper</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">presents</span><span class="p">):</span>
@@ -69195,6 +69016,111 @@ L 716.565625 7.2
 </pre></div>
 
     </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The following block of code prints out the conversion of the <code>smt_v1</code> model into <code>SMTLIB2</code> format. The model is built using the simplest problem instance, i.e. the <code>8x8</code> one.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;instances/8x8.txt&quot;</span>
+<span class="n">w_paper</span><span class="p">,</span> <span class="n">h_paper</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">presents</span> <span class="o">=</span> <span class="n">read_input</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">model</span> <span class="o">=</span> <span class="n">smt_v1</span><span class="p">(</span><span class="n">w_paper</span><span class="p">,</span> <span class="n">h_paper</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">presents</span><span class="p">)</span>
+<span class="n">smtlib2_model</span> <span class="o">=</span> <span class="n">convertor</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">&quot;unknown&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;benchmark&quot;</span><span class="p">,</span> <span class="n">logic</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">smtlib2_model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>; benchmark
+(set-info :status unknown)
+(declare-fun c_3_1 () Int)
+(declare-fun c_3_0 () Int)
+(declare-fun c_2_1 () Int)
+(declare-fun c_2_0 () Int)
+(declare-fun c_1_1 () Int)
+(declare-fun c_1_0 () Int)
+(declare-fun c_0_1 () Int)
+(declare-fun c_0_0 () Int)
+(assert
+ (let ((?x53 (* (- (+ c_3_0 5) c_3_0) (- (+ c_3_1 5) c_3_1))))
+ (let ((?x50 (* (- (+ c_2_0 5) c_2_0) (- (+ c_2_1 3) c_2_1))))
+ (let ((?x47 (* (- (+ c_1_0 3) c_1_0) (- (+ c_1_1 5) c_1_1))))
+ (let ((?x44 (* (- (+ c_0_0 3) c_0_0) (- (+ c_0_1 3) c_0_1))))
+ (let (($x160 (= (+ ?x44 ?x47 ?x50 ?x53) 64)))
+ (let (($x157 (or (and (= (+ c_0_0 3) 8) (= (+ c_0_1 3) 8)) (and (= (+ c_1_0 3) 8) (= (+ c_1_1 5) 8)) (and (= (+ c_2_0 5) 8) (= (+ c_2_1 3) 8)) (and (= (+ c_3_0 5) 8) (= (+ c_3_1 5) 8)))))
+ (let (($x144 (or (and (= c_0_0 0) (= c_0_1 0)) (and (= c_1_0 0) (= c_1_1 0)) (and (= c_2_0 0) (= c_2_1 0)) (and (= c_3_0 0) (= c_3_1 0)))))
+ (let (($x178 (or (and (distinct c_2_0 c_3_0) true) (and (distinct c_2_1 c_3_1) true))))
+ (let (($x175 (or (and (distinct c_1_0 c_3_0) true) (and (distinct c_1_1 c_3_1) true))))
+ (let (($x172 (or (and (distinct c_1_0 c_2_0) true) (and (distinct c_1_1 c_2_1) true))))
+ (let (($x169 (or (and (distinct c_0_0 c_3_0) true) (and (distinct c_0_1 c_3_1) true))))
+ (let (($x166 (or (and (distinct c_0_0 c_2_0) true) (and (distinct c_0_1 c_2_1) true))))
+ (let (($x163 (or (and (distinct c_0_0 c_1_0) true) (and (distinct c_0_1 c_1_1) true))))
+ (let (($x130 (or (&lt;= (+ c_2_0 5) c_3_0) (&lt;= (+ c_2_1 3) c_3_1) (&lt;= (+ c_3_0 5) c_2_0) (&lt;= (+ c_3_1 5) c_2_1))))
+ (let (($x131 (and $x130)))
+ (let (($x124 (or (&lt;= (+ c_1_0 3) c_3_0) (&lt;= (+ c_1_1 5) c_3_1) (&lt;= (+ c_3_0 5) c_1_0) (&lt;= (+ c_3_1 5) c_1_1))))
+ (let (($x125 (and $x124)))
+ (let (($x118 (or (&lt;= (+ c_1_0 3) c_2_0) (&lt;= (+ c_1_1 5) c_2_1) (&lt;= (+ c_2_0 5) c_1_0) (&lt;= (+ c_2_1 3) c_1_1))))
+ (let (($x119 (and $x118)))
+ (let (($x112 (or (&lt;= (+ c_0_0 3) c_3_0) (&lt;= (+ c_0_1 3) c_3_1) (&lt;= (+ c_3_0 5) c_0_0) (&lt;= (+ c_3_1 5) c_0_1))))
+ (let (($x113 (and $x112)))
+ (let (($x106 (or (&lt;= (+ c_0_0 3) c_2_0) (&lt;= (+ c_0_1 3) c_2_1) (&lt;= (+ c_2_0 5) c_0_0) (&lt;= (+ c_2_1 3) c_0_1))))
+ (let (($x107 (and $x106)))
+ (let (($x100 (or (&lt;= (+ c_0_0 3) c_1_0) (&lt;= (+ c_0_1 3) c_1_1) (&lt;= (+ c_1_0 3) c_0_0) (&lt;= (+ c_1_1 5) c_0_1))))
+ (let (($x101 (and $x100)))
+ (let (($x95 (and (&gt;= (+ c_3_0 5) 5) (&lt;= (+ c_3_0 5) 8) (&gt;= (+ c_3_1 5) 5) (&lt;= (+ c_3_1 5) 8))))
+ (let (($x90 (and (&gt;= (+ c_2_0 5) 5) (&lt;= (+ c_2_0 5) 8) (&gt;= (+ c_2_1 3) 3) (&lt;= (+ c_2_1 3) 8))))
+ (let (($x85 (and (&gt;= (+ c_1_0 3) 3) (&lt;= (+ c_1_0 3) 8) (&gt;= (+ c_1_1 5) 5) (&lt;= (+ c_1_1 5) 8))))
+ (let (($x80 (and (&gt;= (+ c_0_0 3) 3) (&lt;= (+ c_0_0 3) 8) (&gt;= (+ c_0_1 3) 3) (&lt;= (+ c_0_1 3) 8))))
+ (let (($x73 (&lt;= c_3_1 3)))
+ (let (($x72 (&gt;= c_3_1 0)))
+ (let (($x71 (&lt;= c_3_0 3)))
+ (let (($x70 (&gt;= c_3_0 0)))
+ (let (($x74 (and $x70 $x71 $x72 $x73)))
+ (let (($x68 (&lt;= c_2_1 5)))
+ (let (($x67 (&gt;= c_2_1 0)))
+ (let (($x66 (&lt;= c_2_0 3)))
+ (let (($x65 (&gt;= c_2_0 0)))
+ (let (($x69 (and $x65 $x66 $x67 $x68)))
+ (let (($x63 (&lt;= c_1_1 3)))
+ (let (($x62 (&gt;= c_1_1 0)))
+ (let (($x61 (&lt;= c_1_0 5)))
+ (let (($x60 (&gt;= c_1_0 0)))
+ (let (($x64 (and $x60 $x61 $x62 $x63)))
+ (let (($x58 (&lt;= c_0_1 5)))
+ (let (($x57 (&gt;= c_0_1 0)))
+ (let (($x56 (&lt;= c_0_0 5)))
+ (let (($x55 (&gt;= c_0_0 0)))
+ (let (($x59 (and $x55 $x56 $x57 $x58)))
+ (and $x59 $x64 $x69 $x74 $x80 $x85 $x90 $x95 $x101 $x107 $x113 $x119 $x125 $x131 $x163 $x166 $x169 $x172 $x175 $x178 $x144 $x157 $x160)))))))))))))))))))))))))))))))))))))))))))))))))))
+(check-sat)
+
+</pre>
+</div>
+</div>
+
 </div>
 </div>
 

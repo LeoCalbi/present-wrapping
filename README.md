@@ -13,8 +13,8 @@ pip install -r requirements.txt
 
 The core of the project is inside the `pwp.ipynb` Jupyter notebook, which is subdivided into the following sections:
 
-* `CP`, containing different MiniZinc models
-* `SMT`, containing various Z3 models
+- `CP`, containing different MiniZinc models
+- `SMT`, containing various Z3 models
 
 Minizinc models have been implemented using the [iMiniZinc](https://github.com/MiniZinc/iminizinc) Jupyter extension, while Z3 models are implemented with the official [Z3 Python API](https://z3prover.github.io/api/html/namespacez3py.html).
 
@@ -22,9 +22,10 @@ Minizinc models have been implemented using the [iMiniZinc](https://github.com/M
 
 You can directly execute models inside the Jupyter notebook to see the corresponding outputs. Moreover, models are well-documented in the notebook itself, with detailed improvements history and constraints studying.
 
-In case you don't want to install Jupyter on your system, you can simply check our results in the `pwp.html` or `pwp.pdf` files.
+In case you don't want to install Jupyter on your system, you can simply check our results in the `pwp.html` file.
 
 ## References
+
 - <a id="1">[1]</a>
   _Mikael Östlund (2017)_.\
   **Implementation and Evaluation of a Sweep-Based Propagator for Diffn in Gecode**.\
