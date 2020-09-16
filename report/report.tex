@@ -282,20 +282,23 @@ It represents an idea taken from \cite{rect-packing}, where domains associated w
 \begin{figure}[h]
    \centering
    \begin{tikzpicture}
-      \draw[step=1cm,black,thin] (0,2) grid (6,3);
+      \draw[step=1cm,black,thin] (0,1) grid (6,3);
       \foreach \xtick in {0,...,6} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
       \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
-      \draw[pattern=south east lines, pattern color=black] (0,0) rectangle (2,2);
-      \draw[pattern=dots, pattern color=black] (2,0) rectangle (4,2);
-      \draw[pattern=south west lines, pattern color=black] (4,0) rectangle (6,2);
+      \draw[pattern=south east lines, pattern color=black] (0,0) rectangle (2,1);
+      \draw[pattern=dots, pattern color=black] (2,0) rectangle (4,1);
+      \draw[pattern=south west lines, pattern color=black] (4,0) rectangle (6,1);
    \end{tikzpicture}
-   \caption{Intervals example: assigning a $4\times2$ to $[0,2]$}
+   \caption{Intervals example: assigning an interval of lenght $2$ to a $4\times2$ rectangle}
    \label{fig:intervals}
 \end{figure}
 
-As shown in figure \ref{fig:intervals}, a $4\times2$ rectangle assigned an $x$-interval of $[0,2]$ consumes 2 units of area at each $x$-cordinate in $[2,3]$, represented by the dotted area.
+As shown in figure \ref{fig:intervals}, a $4\times2$ rectangle assigned an $x$-interval of lenght $2$ in a $6\times3$ box always consumes the units of area represented by the dotted rectangle. 
+Moreover, the grid coordinates inside the rectangle containing lines heading south east represent the feasible assignments to the $4\times2$ rectangle's bottom-left corners.
 
 If there were no feasible set of interval assignments, then the constraint would save us from having to try individual $x$ values. However, if we do find a set of interval assignments, then we must search for a set of single $x$-coordinate values.
+
+In the end, the implementation of this constraint didn't provide significant improvements. Hence, it is not present in the final CP model.
 
 \subsubsubsection{Anchor points [5]} \label{sec:anchor-points-v1}
 It represents a reduction on each present's domain, such that bottom-left corners reside on corners of other rectangles or on the wrapping paper borders.
@@ -334,7 +337,11 @@ The constraint was later removed from the CP model, since it didn't seem to make
       \draw[color=red, thick] (0,1.01) rectangle (0.2,1.2);
    \end{tikzpicture}
    \caption{Anchor points example}
+   \label{fig:anchor-points}
 \end{figure}
+
+Figure \ref{fig:anchor-points} shows the available placements of a rectangle, different than the one filled in cyan,
+which could be positioned in such a way that its bottom-left corner would overlap with one of the two small red rectangles.
 
 \subsubsection{Stacking}
 \begin{itemize}
@@ -343,14 +350,75 @@ The constraint was later removed from the CP model, since it didn't seem to make
 \end{itemize}
 
 \subsubsubsection{Global \texttt{cumulative} [3]} \label{sec:cumulative}
-\begin{figure}
+The \texttt{cumulative} global constraint is defined by the official MiniZinc documentation \cite{minizinc} as follows: \\
+\emph{Requires that a set of tasks given by start times s, durations d, and resource requirements r, never require more than a global resource bound b at any one time.}
+
+\begin{verbatim}
+   constraint cumulative(
+      bl_corners_xs, presents_xs, presents_ys, h_paper
+   );
+   constraint cumulative(
+      bl_corners_ys, presents_ys, presents_xs, w_paper
+   );
+\end{verbatim}
+
+In the context of rectangle packing, the cumulative global constraint can be used by assigning start times to bottom-left corners x-coordinates; durations to presents widths; resource requirements to presents heights and the global resource bound to the paper roll height.
+The same reasoning can be applied for the other dimension, in order to obtain overflow avoidance and stacking maximization.
+
+\begin{figure}[h]
    \centering
    \includegraphics[scale=0.2]{cumulative.png}
    \caption{Cumulative global constraint (image taken from \cite{cumulative})}
+   \label{fig:cumulative}
 \end{figure}
 
+Figure \ref{fig:cumulative} shows an example of the \texttt{cumulative} global constraint, along with the usage of \texttt{disjoint2}, which is the twin constraint of the already mentioned \texttt{diffn\_k}.
+
+The combination of \texttt{cumulative} and \texttt{diffn\_k} is actually the core of the CP model, since together they enable a very strong propagation, which can be directly observed by looking at solving times.
+
 \subsubsubsection{Column stacking by two [4]} \label{sec:stack-two}
+The main idea behind this simple constraint is to stack presents in a single row or column such that their widths or heights would sum to the total width or height, respectively, of the entire paper roll.
+
+\begin{figure}[h]
+   \centering
+   \begin{tikzpicture}
+      \draw[step=1cm,black,thin] (0,0) rectangle (3,3);
+      \foreach \xtick in {0,...,3} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+      \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+      \draw[fill=cyan] (0,0) rectangle (2,1);
+      \draw[fill=cyan] (0,1) rectangle (2,3);
+      \draw[fill=magenta] (2,0) rectangle (3,2);
+      \draw[fill=magenta] (2,2) rectangle (3,3);
+   \end{tikzpicture}
+   \caption{Column stacking by two example}
+   \label{fig:col-stacking-two}
+\end{figure}
+
+In figure \ref{fig:col-stacking-two}, we can observe two different groups, the cyan and the magenta one. In this example, we are stacking by columns, since the cyan-colored rectangles and the magenta-colored rectangles have the same width and their heights sum to the total bounding box height.
+
 \subsubsubsection{General column stacking [5]} \label{sec:column-stacking}
+This constraint is a generalization of the simpler \nameref{sec:stack-two}, which introduces packing multiple rectangles, i.e. groups of size greater than two, into multiple columns.
+
+\begin{figure}[h]
+   \centering
+   \begin{tikzpicture}
+      \draw[step=1cm,black,thin] (0,0) rectangle (5,5);
+      \foreach \xtick in {0,...,5} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+      \foreach \ytick in {0,...,5} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+      \draw[fill=cyan] (0,0) rectangle (2,1);
+      \draw[fill=cyan] (0,1) rectangle (2,3);
+      \draw[fill=cyan] (0,3) rectangle (2,5);
+      \draw[fill=cyan] (2,0) rectangle (4,2);
+      \draw[fill=cyan] (2,2) rectangle (4,5);
+      \draw[fill=magenta] (4,0) rectangle (5,2);
+      \draw[fill=magenta] (4,2) rectangle (5,4);
+      \draw[fill=magenta] (4,4) rectangle (5,5);
+   \end{tikzpicture}
+   \caption{General column stacking example}
+   \label{fig:col-stacking}
+\end{figure}
+
+In figure \ref{fig:col-stacking} we can see how the entire group of cyan-filled rectangles, which has a common width of $2$, gets splitted into subsequent columns, while the magenta-colored group can only occupy one column, the last one in this example.
 
 \subsubsection{Symmetry breaking}
 \begin{itemize}
