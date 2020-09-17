@@ -2,6 +2,7 @@
 \usepackage{titlesec}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage[english]{babel}
 \usepackage{hyperref}
 \usepackage{tikz}
@@ -9,6 +10,8 @@
 \usepackage{amssymb}
 \usepackage{pifont}
 \usepackage{breqn}
+\usepackage{caption}
+\usepackage{subcaption}
 \usepackage[
    backend=biber,%
    bibencoding=utf8,%
@@ -77,7 +80,9 @@
    \pgfpathmoveto{\pgfqpoint{3.2pt}{2.8pt}}
    \pgfpathlineto{\pgfqpoint{2.8pt}{3.2pt}}
    \pgfusepath{stroke}}
-      
+
+% Theorems 
+\newtheorem{theorem}{Observation}
 
 \begin{document}
 % First page
@@ -269,11 +274,17 @@ In particular, presents areas computed by using top-right and bottom-left corner
 
 \subsubsubsection{Global \texttt{count\_eq} [2]} \label{sec:present-at-origin}
 This implied constraint exploits again the usage of bottom-left corners linearization, i.e. \texttt{bl\_corners\_values},
-by simply stating that one and only one present should be placed with its bottom-left corner at the origin.
+by stating that one and only one present should be placed with its bottom-left corner at the origin.
 
 \begin{gather*}
    \lvert\{\,i \mid bx_{i} = 0 \wedge by_{i} = 0\,\}\rvert = 1
 \end{gather*}
+
+As mentioned in the section title, this idea has been implemented using the \texttt{count\_eq} global constraint.
+
+\begin{verbatim}
+   constraint count_eq(bl_corners_values, 0, 1);
+\end{verbatim}
 
 \subsubsubsection{Intervals approach [5]} \label{sec:intervals-approach}
 It represents an idea taken from \cite{rect-packing}, where domains associated with the $x$-coordinate of bottom-left corners are reduced on the basis of a variable-sized interval:\\
@@ -282,19 +293,28 @@ It represents an idea taken from \cite{rect-packing}, where domains associated w
 \begin{figure}[h]
    \centering
    \begin{tikzpicture}
-      \draw[step=1cm,black,thin] (0,1) grid (6,3);
+      \draw[step=1cm,black,thin] (0,0) grid (6,2);
       \foreach \xtick in {0,...,6} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
-      \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
-      \draw[pattern=south east lines, pattern color=black] (0,0) rectangle (2,1);
-      \draw[pattern=dots, pattern color=black] (2,0) rectangle (4,1);
-      \draw[pattern=south west lines, pattern color=black] (4,0) rectangle (6,1);
+      \draw[fill=green, thick] (0,0) circle [radius=0.05];
+      \draw[fill=green, thick] (1,0) circle [radius=0.05];
+      \draw[fill=green, thick] (2,0) circle [radius=0.05];
+      \draw[color=green, thick] (0,0) -- (2,0);
+      \draw[pattern=dots, pattern color=black] (2,0) rectangle (4,2);
+      \draw[pattern=south west lines, pattern color=red] (4,0) rectangle (6,2);
    \end{tikzpicture}
-   \caption{Intervals example: assigning an interval of lenght $2$ to a $4\times2$ rectangle}
+   \caption{Intervals example: assigning $[0,2]$ to a $4\times2$ rectangle}
    \label{fig:intervals}
 \end{figure}
 
-As shown in figure \ref{fig:intervals}, a $4\times2$ rectangle assigned an $x$-interval of lenght $2$ in a $6\times3$ box always consumes the units of area represented by the dotted rectangle. 
-Moreover, the grid coordinates inside the rectangle containing lines heading south east represent the feasible assignments to the $4\times2$ rectangle's bottom-left corners.
+As shown in figure \ref{fig:intervals}, a $4\times2$ rectangle assigned an $x$-interval of $[0,2]$ in a $6\times2$ box always consumes the units of area represented by the dotted rectangle,
+while the rectangle containing red lines heading south west only has the possibility, and not the certainty, of being partially or totally consumed.
+Moreover, the points on the green line represent the feasible assignments to the $x$-coordinate of the $4\times2$ rectangle's bottom-left corner.
+
+In a more general situation, where the rectangle's height is less than the bounding box height, the $x$-interval reasoning remains the same, while the number of feasbile assignments to bottom-left corner's $y$-coordinate increases. 
+
+As a side note, the chosen interval in figure \ref{fig:intervals} has a size of $2$ because
+$$ \lceil 4 \cdot 0.35 \rceil = \lceil 1.4 \rceil = 2,$$
+where $4$ is the rectangle's width and $0.35$ is the selected parameter to compute interval sizes.
 
 If there were no feasible set of interval assignments, then the constraint would save us from having to try individual $x$ values. However, if we do find a set of interval assignments, then we must search for a set of single $x$-coordinate values.
 
@@ -305,15 +325,80 @@ It represents a reduction on each present's domain, such that bottom-left corner
 
 The main implementation-wise problem was our inability of correctly expressing the constraint in an efficient way: the only thing we were able to describe is an upper bound on the number of the overall distinct corners that can be found inside the bounding box at the same time, while also satisfying every other constraint.
 To do that, a new list of decision variables had to be created (\texttt{corners\_values}), containing the linearization (as in \ref{sec:bottom-left-corners-values}) of every corner for each present. 
-The constraint was then posted by limiting unique values, i.e. unique corners, and by forcing each bounding box corner to coincide with exactly one corner, over this new list of variables.
+The constraint was then posted by limiting unique values, i.e. unique corners, over this new list of variables. Then, each bounding box corner was forced to coincide with exactly one value inside \texttt{corners\_values}.
 
 \begin{verbatim}
    constraint nvalue(corners_values) <= 2 * n + 2
 \end{verbatim}
 
+The reported upper bound has been computed as follows:
+\begin{theorem}
+   Let $n$ be the number of rectangles to be placed inside a given squared bounding box. 
+   Let's assume that rectangles will completely fit inside the container, without free space.
+   Then, we have that the number of distinct rectangles corners $k$ should be less than or equal to $2\cdot n + 2$.  
+\end{theorem}
+\begin{proof}[Reasoning]
+   Since we have $n$ rectangles, the total number of corners is exactly $4 \cdot n$. Moreover, we know that $4$ of these corners are reserved by the bounding box ones.
+   For at least half of the other corners ($\frac{4 \cdot n - 4}{2}$), each one must be shared with at least two rectangles, because of our no-free-space assumption.
+   By following this reasoning, we obtain these results:
+   $$
+   k \leq \frac{4 \cdot n - 4}{2} + 4 = 2\cdot n + 2 = u
+   $$
+\end{proof}
+
+\begin{figure}[h]
+   \centering
+   \begin{subfigure}[b]{0.4\textwidth}
+      \centering
+      \begin{tikzpicture}
+         \draw[step=1cm,black,thin] (0,0) rectangle (3,3);
+         \foreach \xtick in {0,...,3} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+         \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+         \draw[fill=cyan] (0,0) rectangle (2,1);
+         \draw[fill=magenta] (0,1) rectangle (2,3);
+         \draw[fill=green] (2,1) rectangle (3,3);
+         \draw[fill=yellow] (2,0) rectangle (3,1);
+         \draw [fill=black, thin] (0,0) circle [radius=0.05];
+         \draw [fill=black, thin] (2,0) circle [radius=0.05];
+         \draw [fill=black, thin] (3,0) circle [radius=0.05];
+         \draw [fill=black, thin] (0,1) circle [radius=0.05];
+         \draw [fill=black, thin] (2,1) circle [radius=0.05];
+         \draw [fill=black, thin] (3,1) circle [radius=0.05];
+         \draw [fill=black, thin] (0,3) circle [radius=0.05];
+         \draw [fill=black, thin] (2,3) circle [radius=0.05];
+         \draw [fill=black, thin] (3,3) circle [radius=0.05];
+      \end{tikzpicture}
+      \caption{$k=9 \leq 10 =u$}
+   \end{subfigure}
+   \begin{subfigure}[b]{0.4\textwidth}
+      \centering
+      \begin{tikzpicture}
+         \draw[step=1cm,black,thin] (0,0) rectangle (3,3);
+         \foreach \xtick in {0,...,3} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+         \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+         \draw[fill=cyan] (0,0) rectangle (2,2);
+         \draw[fill=magenta] (0,2) rectangle (3,3);
+         \draw[fill=green] (2,1) rectangle (3,2);
+         \draw[fill=yellow] (2,0) rectangle (3,1);
+         \draw [fill=black, thin] (0,0) circle [radius=0.05];
+         \draw [fill=black, thin] (2,0) circle [radius=0.05];
+         \draw [fill=black, thin] (3,0) circle [radius=0.05];
+         \draw [fill=black, thin] (2,1) circle [radius=0.05];
+         \draw [fill=black, thin] (3,1) circle [radius=0.05];
+         \draw [fill=black, thin] (0,2) circle [radius=0.05];
+         \draw [fill=black, thin] (2,2) circle [radius=0.05];
+         \draw [fill=black, thin] (3,2) circle [radius=0.05];
+         \draw [fill=black, thin] (0,3) circle [radius=0.05];
+         \draw [fill=black, thin] (3,3) circle [radius=0.05];
+      \end{tikzpicture}
+      \caption{$k=10 \leq 10 =u$}
+   \end{subfigure}
+   \caption{Distinct corners upper bound example}
+\end{figure}
+
 \subsubsubsection{Anchor points [6]} \label{sec:anchor-points-v2}
-This constraint is an evolution of \nameref{sec:anchor-points-v1}, which introduces a more coincise and efficient anchor points approach.
-This time the main idea is about causing the bottom-left corner of a single rectangle to fit a bottom-left corner of another rectangle or a top-left corner of another rectangle, thus reducing the amount of available presents positions combinations inside the wrapping paper.
+This constraint, taken from \cite{sweep} is an evolution of \nameref{sec:anchor-points-v1}, which introduces a more coincise and efficient anchor points approach.
+This time the main idea is about causing the bottom-left corner of a single rectangle to fit a bottom-right or top-left corner of another already-placed rectangle, thus reducing the amount of available positions.
 
 \begin{gather*}
    bx_{i} \in \{\,0\,\} \cup \{\, bx_{j} + px_{j} \mid j = 1 \dots i - 1, i + 1, \dots n \,\} \\
@@ -324,7 +409,7 @@ This time the main idea is about causing the bottom-left corner of a single rect
 
 The described formula was implemented using the global constraint \texttt{member}, so as to achieve better propagation. 
 
-The constraint was later removed from the CP model, since it didn't seem to make any major difference, at least w.r.t. running times over the test instances, even though it was implemented using a global constraint.
+The constraint was later removed from the CP model, since it didn't seem to make any major difference, at least w.r.t. running times over the test instances, even though it was implemented using the mentioned global constraint.
 
 \begin{figure}[h]
    \centering
@@ -362,8 +447,8 @@ The \texttt{cumulative} global constraint is defined by the official MiniZinc do
    );
 \end{verbatim}
 
-In the context of rectangle packing, the cumulative global constraint can be used by assigning start times to bottom-left corners x-coordinates; durations to presents widths; resource requirements to presents heights and the global resource bound to the paper roll height.
-The same reasoning can be applied for the other dimension, in order to obtain overflow avoidance and stacking maximization.
+In the context of rectangle packing, the cumulative global constraint can be used by selecting $x$-coordinates of bottom-left corners as start times, by assigning durations to presents widths, resource requirements to presents heights and the global resource bound to the paper roll height.
+The same reasoning can be applied for the other dimension, in order to obtain overflow avoidance and stacking maximization over both axis.
 
 \begin{figure}[h]
    \centering
@@ -394,7 +479,9 @@ The main idea behind this simple constraint is to stack presents in a single row
    \label{fig:col-stacking-two}
 \end{figure}
 
-In figure \ref{fig:col-stacking-two}, we can observe two different groups, the cyan and the magenta one. In this example, we are stacking by columns, since the cyan-colored rectangles and the magenta-colored rectangles have the same width and their heights sum to the total bounding box height.
+In figure \ref{fig:col-stacking-two}, we can observe two different groups, the cyan and the magenta one. In this example, we are stacking by columns, since each color group contains rectangles with the same width and such that their heights sum to the total bounding box height.
+
+When the constraint is applied, both rectangles must have the same $x$-coordinate for bottom-left corners, while the $y$-coordinate is assigned to zero for the "first" rectangle and to the height of the first present for the "second" rectangle.
 
 \subsubsubsection{General column stacking [5]} \label{sec:column-stacking}
 This constraint is a generalization of the simpler \nameref{sec:stack-two}, which introduces packing multiple rectangles, i.e. groups of size greater than two, into multiple columns.
@@ -418,6 +505,16 @@ This constraint is a generalization of the simpler \nameref{sec:stack-two}, whic
    \label{fig:col-stacking}
 \end{figure}
 
+This predicate is subdivided into different steps:
+\begin{itemize}
+   \item Groups identification: finds and groups together presents with the same width
+   \item Feasibility check: ensures that every group can occupy at least one entire column
+   \item Columns computation: calculates the number of columns (and the corresponding widths) occupied by each group (e.g. a group of width $2$ with heights $[1,2,3]$ in a $12\times3$ box will occupy exactly two columns of width $2$)
+   \item Columns/coordinates assignment: using the \texttt{bin\_packing} global constraint to identify the column for each rectangle in the same group, it incrementally fixes $x$ and $y$ bottom-left corners coordinates 
+\end{itemize}
+
+Groups are ordered by decreasing widths, while rectangles in the same group are sorted by decreasing heights.
+
 In figure \ref{fig:col-stacking} we can see how the entire group of cyan-filled rectangles, which has a common width of $2$, gets splitted into subsequent columns, while the magenta-colored group can only occupy one column, the last one in this example.
 
 \subsubsection{Symmetry breaking}
@@ -427,8 +524,86 @@ In figure \ref{fig:col-stacking} we can see how the entire group of cyan-filled 
 \end{itemize}
 
 \subsubsubsection{Biggest rectangle in lower left quadrant [4]} \label{sec:biggest-lower-left}
+Inspired by the standard n-queens problem, we tried to analyze PWP and its solutions, obtained by reflecting axes.
+
+To cut the search space and avoid exploring paths leading to symmetric non-solutions, we decided to force the biggest rectangle, i.e. the one with greatest area, to have its bottom-left corner inside the lower-left quadrant of the bounding box.
+
+\begin{figure}[h]
+   \centering
+   \begin{subfigure}[b]{0.4\textwidth}
+      \centering
+      \begin{tikzpicture}
+         \draw[step=1cm,black,thin] (0,0) rectangle (4,4);
+         \foreach \xtick in {0,...,4} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+         \foreach \ytick in {0,...,4} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+         \draw[fill=cyan] (0,2) rectangle (2,3);
+         \draw[fill=magenta] (0,0) rectangle (2,2);
+         \draw[fill=green] (2,1) rectangle (3,3);
+         \draw[fill=yellow] (2,0) rectangle (3,1);
+         \draw[fill=red] (3,0) rectangle (4,3);
+         \draw[fill=blue] (0,3) rectangle (3,4);
+         \draw[fill=brown] (3,3) rectangle (4,4);
+      \end{tikzpicture}
+      \caption{Original solution}
+      \label{fig:symmetry-a}
+   \end{subfigure}
+   \begin{subfigure}[b]{0.4\textwidth}
+      \centering
+      \begin{tikzpicture}
+         \draw[step=1cm,black,thin] (0,0) rectangle (4,4);
+         \foreach \xtick in {0,...,4} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+         \foreach \ytick in {0,...,4} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+         \draw[fill=cyan] (2,1) rectangle (4,2);
+         \draw[fill=magenta] (2,2) rectangle (4,4);
+         \draw[fill=green] (1,1) rectangle (2,3);
+         \draw[fill=yellow] (1,3) rectangle (2,4);
+         \draw[fill=red] (0,1) rectangle (1,4);
+         \draw[fill=blue] (1,0) rectangle (4,1);
+         \draw[fill=brown] (0,0) rectangle (1,1);
+      \end{tikzpicture}
+      \caption{Reflected solution}
+      \label{fig:symmetry-b}
+   \end{subfigure}
+   \caption{Symmetric solutions example}
+   \label{fig:symmetry}
+\end{figure}
+
+Figure \ref{fig:symmetry} depicts an example of specular solutions, s.t. subfigure \ref{fig:symmetry-a} satisfies the constraint, while \ref{fig:symmetry-b} does not.
+
+In the end, we realized that this approach was too limiting, thus leading to an increase in the number of failures. Because of this, we decided to remove it in favor of \nameref{sec:areas-ordering}.
+
 \subsubsubsection{Ordering by areas [6]} \label{sec:areas-ordering}
+This constraint is based on \cite{sweep} and it is used to create a lexicographical ordering between the bottom-left corners coordinates of the biggest rectangle $r_{1}$, i.e. the one with the greatest area, and the coordinates of the second biggest present $r_{2}$.
+In this way, $r_{1}$ must be placed below and/or to the left of $r_{2}$. 
+
+\begin{verbatim}
+   lex_less(
+      [bl_corners_ys[r1], bl_corners_xs[r1]], 
+      [bl_corners_ys[r2], bl_corners_xs[r2]]
+   );
+\end{verbatim}
+
+Implementation-wise, we decided to use the global constraint \texttt{lex\_less}, as shown above.
+
 \subsubsubsection{In-column ordering by width [4]} \label{sec:width-ordering}
+This was our first try to enable some kind of ordering between presents with the same bottom-left corners $x$-coordinates.
+In particular, those presents which happen to have the same $x$-coordinate will be constrained to be ordered by their heights s.t. smaller pieces would lie below the taller ones.
+
+Results were not good at all, since this approach transformed a subset of solvable instances into unfeasible ones. Hence, the constraint is not present in the final model.
+
+\begin{figure}[h]
+   \centering
+   \begin{tikzpicture}
+      \draw[step=1cm,black,thin] (0,0) rectangle (3,3);
+      \foreach \xtick in {0,...,3} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
+      \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
+      \draw[fill=cyan] (0,0) rectangle (1,2);
+      \draw[fill=magenta] (0,2) rectangle (3,3);
+      \draw[fill=yellow] (1,0) rectangle (3,2);
+   \end{tikzpicture}
+   \caption{Unfeasibility of in-column ordering by width}
+   \label{fig:col-stacking}
+\end{figure}
 
 
 \subsection{Models}
