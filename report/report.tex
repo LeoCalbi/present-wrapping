@@ -81,7 +81,7 @@
    \pgfpathlineto{\pgfqpoint{2.8pt}{3.2pt}}
    \pgfusepath{stroke}}
 
-% Theorems 
+% Theorems
 \newtheorem{theorem}{Observation}
 
 \begin{document}
@@ -262,7 +262,7 @@ In particular, presents areas computed by using top-right and bottom-left corner
    \sum_{i=1}^{n} (tx_{i} - bx_{i}) \cdot (ty_{i} - by_{i}) \leq w \cdot h
 \end{gather*}
 \begin{gather*}
-   \sum_{i=1}^{n} (tx_{i} - bx_{i}) \cdot (ty_{i} - by_{i}) = \sum_{i=1}^{n} (px_{i} \cdot py_{i}) 
+   \sum_{i=1}^{n} (tx_{i} - bx_{i}) \cdot (ty_{i} - by_{i}) = \sum_{i=1}^{n} (px_{i} \cdot py_{i})
 \end{gather*}
 
 \subsubsection{Positioning}
@@ -310,7 +310,7 @@ As shown in figure \ref{fig:intervals}, a $4\times2$ rectangle assigned an $x$-i
 while the rectangle containing red lines heading south west only has the possibility, and not the certainty, of being partially or totally consumed.
 Moreover, the points on the green line represent the feasible assignments to the $x$-coordinate of the $4\times2$ rectangle's bottom-left corner.
 
-In a more general situation, where the rectangle's height is less than the bounding box height, the $x$-interval reasoning remains the same, while the number of feasbile assignments to bottom-left corner's $y$-coordinate increases. 
+In a more general situation, where the rectangle's height is less than the bounding box height, the $x$-interval reasoning remains the same, while the number of feasbile assignments to bottom-left corner's $y$-coordinate increases.
 
 As a side note, the chosen interval in figure \ref{fig:intervals} has a size of $2$ because
 $$ \lceil 4 \cdot 0.35 \rceil = \lceil 1.4 \rceil = 2,$$
@@ -324,7 +324,7 @@ In the end, the implementation of this constraint didn't provide significant imp
 It represents a reduction on each present's domain, such that bottom-left corners reside on corners of other rectangles or on the wrapping paper borders.
 
 The main implementation-wise problem was our inability of correctly expressing the constraint in an efficient way: the only thing we were able to describe is an upper bound on the number of the overall distinct corners that can be found inside the bounding box at the same time, while also satisfying every other constraint.
-To do that, a new list of decision variables had to be created (\texttt{corners\_values}), containing the linearization (as in \ref{sec:bottom-left-corners-values}) of every corner for each present. 
+To do that, a new list of decision variables had to be created (\texttt{corners\_values}), containing the linearization (as in \ref{sec:bottom-left-corners-values}) of every corner for each present.
 The constraint was then posted by limiting unique values, i.e. unique corners, over this new list of variables. Then, each bounding box corner was forced to coincide with exactly one value inside \texttt{corners\_values}.
 
 \begin{verbatim}
@@ -333,16 +333,16 @@ The constraint was then posted by limiting unique values, i.e. unique corners, o
 
 The reported upper bound has been computed as follows:
 \begin{theorem}
-   Let $n$ be the number of rectangles to be placed inside a given squared bounding box. 
+   Let $n$ be the number of rectangles to be placed inside a given squared bounding box.
    Let's assume that rectangles will completely fit inside the container, without free space.
-   Then, we have that the number of distinct rectangles corners $k$ should be less than or equal to $2\cdot n + 2$.  
+   Then, we have that the number of distinct rectangles corners $k$ should be less than or equal to $2\cdot n + 2$.
 \end{theorem}
 \begin{proof}[Reasoning]
    Since we have $n$ rectangles, the total number of corners is exactly $4 \cdot n$. Moreover, we know that $4$ of these corners are reserved by the bounding box ones.
    For at least half of the other corners ($\frac{4 \cdot n - 4}{2}$), each one must be shared with at least two rectangles, because of our no-free-space assumption.
    By following this reasoning, we obtain these results:
    $$
-   k \leq \frac{4 \cdot n - 4}{2} + 4 = 2\cdot n + 2 = u
+      k \leq \frac{4 \cdot n - 4}{2} + 4 = 2\cdot n + 2 = u
    $$
 \end{proof}
 
@@ -407,7 +407,7 @@ This time the main idea is about causing the bottom-left corner of a single rect
    \forall{i = 1 \dots n}
 \end{gather*}
 
-The described formula was implemented using the global constraint \texttt{member}, so as to achieve better propagation. 
+The described formula was implemented using the global constraint \texttt{member}, so as to achieve better propagation.
 
 The constraint was later removed from the CP model, since it didn't seem to make any major difference, at least w.r.t. running times over the test instances, even though it was implemented using the mentioned global constraint.
 
@@ -510,7 +510,7 @@ This predicate is subdivided into different steps:
    \item Groups identification: finds and groups together presents with the same width
    \item Feasibility check: ensures that every group can occupy at least one entire column
    \item Columns computation: calculates the number of columns (and the corresponding widths) occupied by each group (e.g. a group of width $2$ with heights $[1,2,3]$ in a $12\times3$ box will occupy exactly two columns of width $2$)
-   \item Columns/coordinates assignment: using the \texttt{bin\_packing} global constraint to identify the column for each rectangle in the same group, it incrementally fixes $x$ and $y$ bottom-left corners coordinates 
+   \item Columns/coordinates assignment: using the \texttt{bin\_packing} global constraint to identify the column for each rectangle in the same group, it incrementally fixes $x$ and $y$ bottom-left corners coordinates
 \end{itemize}
 
 Groups are ordered by decreasing widths, while rectangles in the same group are sorted by decreasing heights.
@@ -574,11 +574,11 @@ In the end, we realized that this approach was too limiting, thus leading to an 
 
 \subsubsubsection{Ordering by areas [6]} \label{sec:areas-ordering}
 This constraint is based on \cite{sweep} and it is used to create a lexicographical ordering between the bottom-left corners coordinates of the biggest rectangle $r_{1}$, i.e. the one with the greatest area, and the coordinates of the second biggest present $r_{2}$.
-In this way, $r_{1}$ must be placed below and/or to the left of $r_{2}$. 
+In this way, $r_{1}$ must be placed below and/or to the left of $r_{2}$.
 
 \begin{verbatim}
    lex_less(
-      [bl_corners_ys[r1], bl_corners_xs[r1]], 
+      [bl_corners_ys[r1], bl_corners_xs[r1]],
       [bl_corners_ys[r2], bl_corners_xs[r2]]
    );
 \end{verbatim}
@@ -589,26 +589,133 @@ Implementation-wise, we decided to use the global constraint \texttt{lex\_less},
 This was our first try to enable some kind of ordering between presents with the same bottom-left corners $x$-coordinates.
 In particular, those presents which happen to have the same $x$-coordinate will be constrained to be ordered by their heights s.t. smaller pieces would lie below the taller ones.
 
-Results were not good at all, since this approach transformed a subset of solvable instances into unfeasible ones. Hence, the constraint is not present in the final model.
+Results were not good at all, since this approach transformed a subset of solvable instances into unfeasible ones, because it was highly dependent on input presents order. Hence, the constraint is not present in the final model.
+
+\subsection{Models}
+In this section are presented our final models and their search strategy. The optional model has the ability to handle presents rotation and rectangles with the same shapes.
+\subsubsection*{Search strategy}
+We decided to prioritize positioning "bigger" presents first, since their placement greatly reduce the domain of the other ones. After trying every meaningful ordering, i.e. by height, width or area, the one that gave us the best outcomes was sorting presents by decreasing values of area.
+
+\begin{verbatim}
+   array[1..n] of int: areas =
+      [presents_xs[i] * presents_ys[i] | i in 1..n];
+   array[1..n] of 1..n: order =
+      sort_by(1..n, [-areas[i] | i in 1..n]);
+\end{verbatim}
+
+The actual search strategy starts by checking if \nameref{sec:column-stacking} is feasible. In case of a positive answer we do not need to apply complex approaches, since everything is already handled by column stacking positioning. On the other hand, when column stacking is not feasible, we rely on the previously defined ordering by assigning firstly $y$-coordinates and then $x$-coordinates. These assignments are done by selecting values starting from the minimum one in each domain.
+
+In this kind of search strategy applying restarts was not an option, since we didn't have any random component. Anyway we tried to use \texttt{luby} and \texttt{constant} restarts in a simpler search strategy, but it resulted into worse running times.
+
+\begin{verbatim}
+   solve::
+    if not(col_stacking_feasible) then
+        seq_search([
+            int_search(
+               [bl_corners_ys[i] | i in order],
+               input_order,
+               indomain_min,
+               complete
+            ),
+            int_search(
+               [bl_corners_xs[i] | i in order],
+               input_order,
+               indomain_min,
+               complete
+            )
+        ])
+    else
+      int_search(
+         bl_corners_values,
+         dom_w_deg,
+         indomain_min,
+         complete
+      )
+    endif
+   satisfy;
+\end{verbatim}
+
+\subsubsection*{Final model}
+To present a global undestanding of our final model, below we report a list linking to each and every included constraint.
+\begin{itemize}
+   \item \nameref{sec:diffnk}
+   \item \nameref{sec:cumulative}
+   \item \nameref{sec:reduce-presents-domains}
+   \item \nameref{sec:different-bl-corners}
+   \item \nameref{sec:present-at-origin}
+   \item \nameref{sec:areas-summation}
+   \item \nameref{sec:areas-ordering}
+   \item \nameref{sec:column-stacking}
+\end{itemize}
+Using this model we were able to solve every test instance, with the exception of the $23\times23$ one, in under one second. This was mostly possible thanks to the \nameref{sec:column-stacking} constraint, which enabled us to reduce running times, in particular w.r.t. bigger instances.
 
 \begin{figure}[h]
    \centering
-   \begin{tikzpicture}
-      \draw[step=1cm,black,thin] (0,0) rectangle (3,3);
-      \foreach \xtick in {0,...,3} {\pgfmathsetmacro\result{\xtick * 1} \node at (\xtick,-0.5) {\pgfmathprintnumber{\result}}; }
-      \foreach \ytick in {0,...,3} {\pgfmathsetmacro\result{\ytick * 1} \node at (-.5,\ytick) {\pgfmathprintnumber{\result}}; }
-      \draw[fill=cyan] (0,0) rectangle (1,2);
-      \draw[fill=magenta] (0,2) rectangle (3,3);
-      \draw[fill=yellow] (1,0) rectangle (3,2);
-   \end{tikzpicture}
-   \caption{Unfeasibility of in-column ordering by width}
-   \label{fig:col-stacking}
+   \includegraphics[scale=0.45]{cp-times.png}
+   \caption{Final CP model running times}
 \end{figure}
 
+\subsubsection*{Optional model}
+This model is dedicated to the implementation of the optional parts of the project, namely rotation and same dimensions handling.
 
-\subsection{Models}
+About rotation, we removed the column stacking approach, since presents dimensions are now considered as variables, and we introduced the global constraint \texttt{geost\_bb} which can be used to find appropriate positions and rotations of the given rectangles without overlaps, by constraining them to be contained in a given bounding box. This approach obviously turned out to be much slower w.r.t. our final model.
 
-\subsubsection*{Search strategy}
+The \texttt{geost\_bb} global constraint is defined by the official MiniZinc documentation \cite{minizinc} as follows: \\
+\emph{A global non-overlap constraint for k dimensional objects. It enforces that no two objects overlap, and that all objects fit within a global k dimensional bounding box.}
+
+\begin{verbatim}
+   constraint geost_bb(
+      k, rect_size, rect_offset, shape, bl_corners, kind, l, u
+   );
+\end{verbatim}
+
+About \texttt{geost\_bb} parameters, as described in \cite{geost}:
+\begin{itemize}
+   \item \texttt{k}: The number of dimensions, i.e. 2
+   \item \texttt{rect\_size}: The size of each rectangle in \texttt{k} dimensions, i.e. a list of $2\cdot n$ elements given by the dimensions of each present and its $90^{\circ}$ rotation
+   \item \texttt{rect\_offset}: The offset of each rectangle from the base position in \texttt{k}  dimensions, i.e. a list of $2\cdot n$ elements fixed to $[0,0]$, representing the offset of each rectangle from the top-right corner of its minimum enclosing bounding-box
+   \item \texttt{shape}: The set of rectangles defining the $i$-th shape, i.e.a list of $2\cdot n$ indexes going from $1$ to $2\cdot n$, representing that each figure is directly associated with exactly one rectangle
+   \item \texttt{bl\_corners}: The base position of each object
+   \item \texttt{kind}: A list of $n$ elements, representing the shape used by each object, i.e. either the original rectangle or its $90^{\circ}$ rotation
+   \item \texttt{l}: An array of lower bounds, i.e. the bottom-left corner of our paper roll
+   \item \texttt{u}: An array of upper bounds, i.e. the top-right corner of our paper roll.
+\end{itemize}
+
+In order to achieve better results, it could be possible to find the minimum number of rotations needed to make column stacking feasible and proceed like before.
+
+About rectangles with same dimensions, we simply included a symmetry breaking constraint accounting for pairwise positioning of equally-sized presents, because these presents can be swapped without any kind of difference in the results.
+
+\begin{verbatim}
+   constraint forall(i in 1..n)(
+      let {
+          array[int] of int: same_dim_ind = [
+               j | j in 1..n where
+               presents_xs[j] = presents_xs[i] /\
+               presents_ys[j] = presents_ys[i]
+            ]
+      } in
+          if
+            length(same_dim_ind) > 1 /\
+            min(same_dim_ind) = i
+          then
+            forall(j in index_set(same_dim_ind) where j > 1) (
+               lex_less(
+                  [
+                     bl_corners_ys[same_dim_ind[j - 1]],
+                     bl_corners_xs[same_dim_ind[j - 1]]
+                  ],
+                  [
+                     bl_corners_ys[same_dim_ind[j]],
+                     bl_corners_xs[same_dim_ind[j]]
+                  ]
+               )
+            )
+          else true
+          endif
+  );
+\end{verbatim}
+
+The above code groups rectangles with the same dimensions and constrains the one with the minimum index to be placed below and/or to the left of the second one; the same happens between the second and the third presents in the same group; and so on and so forth. This approach creates a chain of constraints s.t. every symmetric solution and non-solution is eliminated from the search path.
 
 \section{Satisfiability Modulo Theory}
 
