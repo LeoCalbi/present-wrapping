@@ -12,6 +12,18 @@
 \usepackage{breqn}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{minted}
+\setminted{
+   numberblanklines=false, 
+   mathescape, 
+   texcomments, 
+   autogobble, 
+   breakanywhere, 
+   breakautoindent, 
+   breaklines,
+   frame=none
+}
+\setminted[python]{python3}
 \usepackage[
    backend=biber,%
    bibencoding=utf8,%
@@ -92,6 +104,8 @@
 \maketitle
 \tableofcontents
 \newpage
+\listoffigures
+\newpage
 
 \section*{Foreword}
 The problem is presented as: given a wrapping paper roll of a certain dimension and a list of presents, decide how to cut off pieces of paper so  that all the presents can be wrapped.
@@ -131,9 +145,7 @@ In our case-study we tried different approaches, by developing different models.
 
 In the following subsections each and every tested constraint, along with associated decision variables, will be carefully explained.
 
-Inserire qui roba riguardo variabili/vincoli scartati.
-
-\subsection{Decision variables}
+\subsection{Decision variables} \label {sec:cp-variables}
 \subsubsection*{Bottom-left corners} \label{sec:bottom-left-corners}
 This is a two-dimensional list of decision variables (\texttt{bl\_corners} or \texttt{b}), where each entry represents the bottom-left corner of a rectangle in the bounding box. Finding a satisfying assignement for this list is the main goal of this project. Moreover, the list is also used to graphically represent every instance solution.
 
@@ -159,7 +171,9 @@ To reduce the search space, bottom-left corners variables domains are defined as
 \end{figure}
 
 \subsubsection*{Top-right corners} \label{sec:top-right-corners}
-As \nameref{sec:bottom-left-corners} but representing the top-right corner of each rectangle (\texttt{tr\_corners}). It is used to reduce the number of positions in which a rectangle can fall in, because it must be inside the bounding box.
+As \nameref{sec:bottom-left-corners} but representing the top-right corner of each rectangle (\texttt{tr\_corners} or \texttt{t}). It is used to reduce the number of positions in which a rectangle can fall in, because it must be inside the bounding box.
+
+To ease their representation inside this paper, we refer to \texttt{tl\_corners\_xs} or \texttt{tx} as the first dimension of \texttt{tr\_corners}, while \texttt{tr\_corners\_ys} or \texttt{ty} will be used as a shorthand for the second dimension of \texttt{tr\_corners}.
 
 To reduce the search space, \texttt{tr\_corners} variables domain is defined as follows: $$\min({\min({px}), \min({py})}) \dots \max({h, w})$$
 
@@ -194,7 +208,7 @@ To reduce the search space, \texttt{bl\_corners\_values} variables domain is def
    \caption{Example of 2D-coordinates linearization in a 3 by 3 box}
 \end{figure}
 
-\subsection{Constraints}
+\subsection{Constraints} \label{sec:cp-constraints}
 The constraints described below, divided by scope, are presented at the top of each section with a simple schema depicting their evolution throughout different models.
 The following is a legend explaining how constraints advancement is achieved:
 \begin{itemize}
@@ -718,6 +732,97 @@ About rectangles with same dimensions, we simply included a symmetry breaking co
 The above code groups rectangles with the same dimensions and constrains the one with the minimum index to be placed below and/or to the left of the second one; the same happens between the second and the third presents in the same group; and so on and so forth. This approach creates a chain of constraints s.t. every symmetric solution and non-solution is eliminated from the search path.
 
 \section{Satisfiability Modulo Theory}
+SMT models are implemented with the Z3 Python API models execution is managed within the Jupyter notebook instance, as already described for CP models.
+
+Since we obtained great results with the constraints described in \ref{sec:cp-constraints}, we tried to re-implement the same ideas as in the CP models above, converting code from MiniZinc to be compatible with Z3 specifications.
+
+\subsection{Decision variables}
+Variables for the SMT models are more or less the same as those described in \ref{sec:cp-variables}. So, the main ones are \texttt{bl\_corners}, but we are also keeping track of \texttt{tr\_corners}. 
+
+In addition, we are introducing rectangles areas (\texttt{actual\_areas} or \texttt{a}) computed from bottom-left and top-right corners. 
+
+\begin{gather*}
+   a_{i} = (tx_{i} - bx_{i}) \cdot (ty_{i} - by_{i})
+\end{gather*}
+
+Moreover, we are getting rid of bottom-left corners values, i.e. \texttt{bl\_corners\_values}, since constraints associated with this list of variables seemed redundant for our SMT model.
+
+\subsection{Formulae}
+By looking at MiniZinc's standard library \cite{minizinc-lib} and other implementations of SMT functions, available online (e.g. \cite{hakank}), we tried to translate predicates into lists of formulae.
+
+\subsubsection{Non-overlapment}
+
+\subsubsubsection*{Translation of \texttt{diffn}}
+The \texttt{diffn} global constraint is translated as a single CNF (Conjunctive Normal Form) formula, where each clause identifies pairwise non-overlapment checks. As show below, we can see that it resembles our implementation of the \nameref{sec:presents-cannot-overlap} CP constraint, which was the first one to be coded to avoid presents intersections.
+
+\begin{minted}{python}
+def z3_diffn(x, y, dx, dy):
+    '''
+    Return a list of constraints computing non-overlapping checks
+    '''
+    c = []
+    n = len(x)
+    for i in range(n):
+        for j in range(i + 1, n):
+            c.append(
+                And(Or([
+                    x[i] + dx[i] <= x[j],
+                    y[i] + dy[i] <= y[j],
+                    x[j] + dx[j] <= x[i],
+                    y[j] + dy[j] <= y[i]
+                ]))
+            )
+    return c
+\end{minted}
+
+About \texttt{z3\_diffn} parameters:
+\begin{itemize}
+   \item \texttt{x}: \texttt{bl\_corners\_xs}
+   \item \texttt{y}: \texttt{bl\_corners\_ys}
+   \item \texttt{dx}: \texttt{presents\_xs}
+   \item \texttt{dy}: \texttt{presents\_ys}
+\end{itemize}
+
+\subsubsubsection*{Translation of \texttt{all\_different}}
+The \texttt{all\_different} global constraint is translated as a single CNF formula, where each clause identifies pairwise difference checks. Our implementation is based on the assumption of receiving a two-dimensional input, with a variable number of columns, that should also be given as an additional parameter. 
+
+\begin{minted}{python}
+def z3_alldifferent_mat(l, s):
+   '''
+   Return a list of constraints computing all different checks
+   '''
+   assert(s > 1)
+   
+   c = []
+   n = len(l)
+   for i in range(n):
+      for j in range(i + 1, n):
+         disjunction = []
+         for k in range(s):
+               disjunction.append(l[i][k] != l[j][k])
+         c.append(Or(disjunction))
+   return c
+\end{minted}
+
+About \texttt{z3\_alldifferent\_mat} parameters:
+\begin{itemize}
+   \item \texttt{l}: \texttt{bl\_corners}
+   \item \texttt{s}: $2$, representing two coordinates for each corner
+\end{itemize}
+
+\subsubsection{Containment}
+\subsubsubsection*{Reduce presents domains}
+\subsubsubsection*{Areas summation}
+
+\subsubsection{Positioning}
+\subsubsubsection*{Translation of \texttt{count\_eq}}
+
+\subsubsection{Stacking}
+\subsubsubsection*{Translation of \texttt{cumulative}}
+
+\subsection{Models}
+
+\section{Conclusions}
 
 \printbibliography
 
