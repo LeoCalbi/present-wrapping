@@ -23,3 +23,13 @@ Minizinc models have been implemented using the [iMiniZinc](https://github.com/M
 You can directly execute models inside the Jupyter notebook to see the corresponding outputs. Moreover, models are well-documented in the notebook itself, with detailed improvements history and constraints studying.
 
 In case you don't want to install Jupyter on your system, you can simply check our results in the [pwp.html](pwp.html) file and read more about the project in the [report.pdf](report/report.pdf) file.
+
+## Other files
+
+Folders in the root of the project have the following content:
+
+- `instances`: contains PWP test instances (check [pwp.html](pwp.html) to see the file structure)
+- `models`: contains CP and SMT models, in `.mzn` and `.smt2` extensions
+- `out`: contains textual outputs for both CP and SMT solutions
+- `plots`: contains graphical solutions and running time plots for both CP and SMT final models
+- `report`: contains the project report
